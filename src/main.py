@@ -1,6 +1,5 @@
 import pickle  # nosec
 from pathlib import Path
-from typing import Any
 
 import click
 from modin import pandas as pd
@@ -15,17 +14,11 @@ def embed(modelID: str, content: Series) -> ndarray:
         model_name_or_path=modelID,
     )
 
-    pool: dict[str, Any] = model.start_multi_process_pool()
-
-    data: ndarray = model.encode_multi_process(
+    return model.encode(
         sentences=content.to_list(),
         show_progress_bar=True,
-        pool=pool,
+        batch_size=100,
     )
-
-    model.stop_multi_process_pool(pool=pool)
-
-    return data
 
 
 def readDB(dbEngine: Engine) -> DataFrame:
