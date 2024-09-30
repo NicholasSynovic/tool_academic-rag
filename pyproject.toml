@@ -12,6 +12,7 @@ classifiers = ["Development Status :: 1 - Planning", "Programming Language :: Py
 
 [tool.poetry.dependencies]
 python = "3.9.19"
+modin = {version = "^0.32.0", extras = ["all"]}
 
 
 [build-system]
