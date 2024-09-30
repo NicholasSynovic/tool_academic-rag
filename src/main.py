@@ -12,6 +12,7 @@ from sqlalchemy import Engine, create_engine
 def embed(modelID: str, content: Series) -> ndarray:
     model: SentenceTransformer = SentenceTransformer(
         model_name_or_path=modelID,
+        device="cuda",
     )
 
     return model.encode(
@@ -55,7 +56,7 @@ def main(inputPath: Path, modelName: str) -> None:
 
     df: DataFrame = readDB(dbEngine=dbEngine)
 
-    abstracts: Series = df["abstract"]
+    abstracts: Series = df["abstract"][0:1000]
 
     embeddings: ndarray = embed(modelID=modelName, content=abstracts)
 

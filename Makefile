@@ -5,7 +5,7 @@ build:
 create-dev:
 	pre-commit install
 	rm -rf env
-	/opt/intel/oneapi/intelpython/python3.9/bin/python3.9 -m venv env
+	python3.10 -m venv env
 	( \
 		. env/bin/activate; \
 		pip install -r requirements.txt; \

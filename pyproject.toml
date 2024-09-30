@@ -11,22 +11,19 @@ keywords = ["Template"]
 classifiers = ["Development Status :: 1 - Planning", "Programming Language :: Python :: 3.9"]
 
 [tool.poetry.dependencies]
-python = "3.9.19"
+python = "^3.10"
 modin = {version = "^0.32.0", extras = ["all"]}
 sqlalchemy = "^2.0.35"
 click = "^8.1.7"
-torch = {version = "2.3.1+cxx11.abi", source = "pytorch-intel"}
-torchvision = {version = "0.18.1+cxx11.abi", source = "pytorch-intel"}
-torchaudio = {version = "2.3.1+cxx11.abi", source = "pytorch-intel"}
-intel-extension-for-pytorch = {version = "2.3.110+xpu", source = "pytorch-intel"}
-oneccl-bind-pt = {version = "2.3.100+xpu", source = "pytorch-intel"}
 openvino = "^2024.4.0"
 sentence-transformers = "^3.1.1"
-
+torch = {version = "^2.4.1+cu124", source = "pytorch"}
+torchvision = {version = "^0.19.1+cu124", source = "pytorch"}
+torchaudio = {version = "^2.4.1+cu124", source = "pytorch"}
 
 [[tool.poetry.source]]
-name = "pytorch-intel"
-url = "https://pytorch-extension.intel.com/release-whl/stable/xpu/us"
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu124"
 priority = "explicit"
 
 [build-system]
