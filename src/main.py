@@ -1,5 +1,6 @@
 import pickle  # nosec
 from pathlib import Path
+from warnings import filterwarnings
 
 import click
 from modin import pandas as pd
@@ -54,9 +55,11 @@ def readDB(dbEngine: Engine) -> DataFrame:
 def main(inputPath: Path, modelName: str) -> None:
     dbEngine: Engine = create_engine(url=f"sqlite:///{inputPath}")
 
+    print(f"Reading {inputPath}...")
     df: DataFrame = readDB(dbEngine=dbEngine)
 
-    abstracts: Series = df["abstract"][0:1000]
+    print("Getting abstracts...")
+    abstracts: Series = df["abstract"]
 
     embeddings: ndarray = embed(modelID=modelName, content=abstracts)
 
@@ -66,4 +69,5 @@ def main(inputPath: Path, modelName: str) -> None:
 
 
 if __name__ == "__main__":
+    filterwarnings(action="ignore")
     main()
