@@ -1,8 +1,9 @@
-import pickle  # nosec
 from pathlib import Path
 from warnings import filterwarnings
 
 import click
+from chromadb import PersistentClient
+from chromadb.api.models.Collection import Collection
 from modin import pandas as pd
 from modin.pandas import DataFrame, Series
 from numpy import ndarray
@@ -27,6 +28,24 @@ def readDB(dbEngine: Engine) -> DataFrame:
     return pd.read_sql_table(table_name="documents", con=dbEngine)
 
 
+def toChromaDB(
+    ids: Series,
+    documents: Series,
+    embeddings: ndarray,
+    dbPath: Path,
+) -> None:
+    client: PersistentClient = PersistentClient(path=dbPath.__str__())
+    collection: Collection = client.create_collection(
+        name="arXiv",
+        get_or_create=True,
+    )
+    collection.add(
+        ids=ids.to_list(),
+        embeddings=embeddings.tolist(),
+        documents=documents.to_list(),
+    )
+
+
 @click.command()
 @click.option(
     "-i",
@@ -43,6 +62,22 @@ def readDB(dbEngine: Engine) -> DataFrame:
     required=True,
 )
 @click.option(
+    "-o",
+    "--output",
+    "outputPath",
+    help="Path to store Chroma DB",
+    type=click.Path(
+        exists=False,
+        dir_okay=True,
+        writable=True,
+        resolve_path=True,
+        path_type=Path,
+    ),
+    required=False,
+    default="../data/chroma",
+    show_default=True,
+)
+@click.option(
     "-m",
     "--model",
     "modelName",
@@ -52,7 +87,7 @@ def readDB(dbEngine: Engine) -> DataFrame:
     default="all-mpnet-base-v2",
     show_default=True,
 )
-def main(inputPath: Path, modelName: str) -> None:
+def main(inputPath: Path, outputPath: Path, modelName: str) -> None:
     dbEngine: Engine = create_engine(url=f"sqlite:///{inputPath}")
 
     print(f"Reading {inputPath}...")
@@ -63,9 +98,12 @@ def main(inputPath: Path, modelName: str) -> None:
 
     embeddings: ndarray = embed(modelID=modelName, content=abstracts)
 
-    with open("embeddings.ndarray.pickle", "wb") as pf:
-        pickle.dump(obj=embeddings, file=pf)
-        pf.close()
+    toChromaDB(
+        embeddings=embeddings[0:1000],
+        dbPath=outputPath,
+        ids=df["id"][0:1000],
+        documents=abstracts[0:1000],
+    )
 
 
 if __name__ == "__main__":
