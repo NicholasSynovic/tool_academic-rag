@@ -1,5 +1,6 @@
 import click
-from optimum.intel import OVModelForCausalLM
+from optimum.intel import OVModelForCausalLM, OVWeightQuantizationConfig
+from transformers import AutoTokenizer
 
 
 @click.command()
@@ -32,14 +33,26 @@ from optimum.intel import OVModelForCausalLM
     type=str,
 )
 def main(inputID: str, hfApiKey: str, outputID: str) -> None:
+    quantization_config: OVWeightQuantizationConfig = (
+        OVWeightQuantizationConfig(  # noqa: E501
+            bits=8,
+        )
+    )
+
     model = OVModelForCausalLM.from_pretrained(
-        inputID,
+        model_id=inputID,
         export=True,
         use_auth_token=hfApiKey,
         force_download=False,
+        quantization_config=quantization_config,
     )
 
-    model.save_pretrained(outputID)
+    tokenizer = AutoTokenizer.from_pretrained(
+        pretrained_model_name_or_path=inputID,
+    )
+
+    model.save_pretrained(save_directory=outputID)
+    tokenizer.save_pretrained(save_directory=outputID)
 
 
 if __name__ == "__main__":
