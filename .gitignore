@@ -161,3 +161,4 @@ cython_debug/
 build-docs/*
 *.db
 *.pickle
+models/ov_model.int8/*
