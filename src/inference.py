@@ -1,33 +1,43 @@
 from pathlib import Path
 
 import click
-
-# from optimum.intel.openvino import OVModelForCausalLM
-from transformers import AutoTokenizer
-
-# import openvino as ov
-# from langchain_core.prompts import PromptTemplate
-# from langchain_huggingface import HuggingFacePipeline
+from langchain_core.prompts import PromptTemplate
+from langchain_huggingface import HuggingFacePipeline
 
 
-def setupModel(modelPath: Path, tokenizer: str, device: str = "CPU") -> None:
-    # ov_config: dict[str, str] = {
-    #     "PERFORMANCE_HINT": "LATENCY",
-    #     "NUM_STREAMS": "1",
-    #     "CACHE_DIR": "",
-    #     "KV_CACHE_PRECISION": "u8",
-    #     "DYNAMIC_QUANTIZATION_GROUP_SIZE": "32",
-    # }
+def setupModel(modelPath: Path, device: str = "CPU") -> HuggingFacePipeline:
+    ov_config: dict[str, str] = {
+        "PERFORMANCE_HINT": "LATENCY",
+        "NUM_STREAMS": "1",
+        "CACHE_DIR": "",
+        "KV_CACHE_PRECISION": "u8",
+        "DYNAMIC_QUANTIZATION_GROUP_SIZE": "32",
+    }
 
-    tokenizer: AutoTokenizer = AutoTokenizer.from_pretrained(tokenizer)
+    return HuggingFacePipeline.from_model_id(
+        model_id=modelPath.__str__(),
+        task="text-generation",
+        backend="openvino",
+        model_kwargs={"device": device, "ov_config": ov_config},
+    )
 
-    # ov_llm = HuggingFacePipeline.from_model_id(
-    #     model_id=modelPath,
-    #     task="text-generation",
-    #     backend="openvino",
-    #     model_kwargs={"device": "CPU", "ov_config": ov_config},
-    #     pipeline_kwargs={"max_new_tokens": 10},
-    # )
+
+def prompt(hfp: HuggingFacePipeline) -> None:
+    template = """Question: {question}
+
+    Answer: Let's think step by step."""
+    prompt = PromptTemplate.from_template(template)
+
+    generation_config = {
+        "skip_prompt": True,
+        "pipeline_kwargs": {"max_new_tokens": 100},
+    }
+    chain = prompt | hfp.bind(**generation_config)
+
+    question = "What is electroencephalography?"
+
+    for chunk in chain.stream(question):
+        print(chunk, end="", flush=True)
 
 
 @click.command()
@@ -44,21 +54,13 @@ def setupModel(modelPath: Path, tokenizer: str, device: str = "CPU") -> None:
         resolve_path=True,
     ),
     required=False,
-    default="../models/ov_model.int8/openvino_model.xml",
+    default="../models/ov_model.int8",
     show_default=True,
 )
-@click.option(
-    "-t",
-    "--tokenizer",
-    "tokenizerModel",
-    help="Tokenizer to use with the model",
-    type=str,
-    required=False,
-    default="meta-llama/Llama-2-7b-chat-hf",
-    show_default=True,
-)
-def main(modelPath: Path, tokenizerModel: str) -> None:
-    setupModel(modelPath=modelPath, tokenizer=tokenizerModel)
+def main(modelPath: Path) -> None:
+    hfp: HuggingFacePipeline = setupModel(modelPath=modelPath)
+
+    prompt(hfp=hfp)
 
 
 if __name__ == "__main__":
