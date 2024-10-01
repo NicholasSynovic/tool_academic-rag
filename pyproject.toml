@@ -20,6 +20,7 @@ sentence-transformers = "^3.1.1"
 torch = {version = "^2.4.1+cu124", source = "pytorch"}
 torchvision = {version = "^0.19.1+cu124", source = "pytorch"}
 torchaudio = {version = "^2.4.1+cu124", source = "pytorch"}
+optimum = {version = "^1.22.0", extras = ["openvino", "nncf"]}
 
 [[tool.poetry.source]]
 name = "pytorch"
